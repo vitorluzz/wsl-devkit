@@ -90,14 +90,13 @@ fi
 # VERIFICAÇÃO: Java
 # ============================================================================
 echo -e "\n${BLUE}☕ Verificando Java...${NC}"
-if [ -d "$HOME/java/jdk-21.0.2" ]; then
-    if [ -n "$JAVA_HOME" ]; then
-        JAVA_VERSION=$($JAVA_HOME/bin/java -version 2>&1 | head -n 1 | cut -d'"' -f2)
+JAVA_DIR=$(ls -d "$HOME"/java/jdk-* 2>/dev/null | head -1)
+if [ -n "$JAVA_DIR" ] && [ -x "$JAVA_DIR/bin/java" ]; then
+    JAVA_VERSION=$("$JAVA_DIR/bin/java" -version 2>&1 | head -n 1 | cut -d'"' -f2)
+    if [ -n "${JAVA_HOME:-}" ]; then
         check_status "Java JDK" "ok" "v$JAVA_VERSION"
         echo -e "      └─ JAVA_HOME: ${CYAN}$JAVA_HOME${NC}"
     else
-        # Tenta usar diretamente
-        JAVA_VERSION=$($HOME/java/jdk-21.0.2/bin/java -version 2>&1 | head -n 1 | cut -d'"' -f2)
         check_status "Java JDK" "warning" "v$JAVA_VERSION - JAVA_HOME não definido"
         echo -e "      └─ ${YELLOW}Execute: source ~/.bashrc${NC}"
     fi
@@ -112,31 +111,31 @@ fi
 # VERIFICAÇÃO: Apache Spark / PySpark
 # ============================================================================
 echo -e "\n${BLUE}⚡ Verificando Apache Spark (PySpark)...${NC}"
-if [ -d "$HOME/apache/spark-3.5.5" ]; then
-    if [ -n "$SPARK_HOME" ]; then
-        SPARK_VERSION=$($SPARK_HOME/bin/spark-submit --version 2>&1 | grep -oP 'version \K[0-9.]+' | head -1)
-        if [ -z "$SPARK_VERSION" ]; then
-            SPARK_VERSION="3.5.5"
-        fi
+SPARK_DIR=$(ls -d "$HOME"/apache/spark-* 2>/dev/null | head -1)
+if [ -n "$SPARK_DIR" ]; then
+    SPARK_DIR_VERSION=$(basename "$SPARK_DIR" | sed 's/^spark-//')
+    if [ -n "${SPARK_HOME:-}" ]; then
+        SPARK_VERSION=$("$SPARK_HOME/bin/spark-submit" --version 2>&1 | grep -oP 'version \K[0-9.]+' | head -1)
+        [ -z "$SPARK_VERSION" ] && SPARK_VERSION="$SPARK_DIR_VERSION"
         check_status "Apache Spark" "ok" "v$SPARK_VERSION"
         echo -e "      └─ SPARK_HOME: ${CYAN}$SPARK_HOME${NC}"
     else
-        check_status "Apache Spark" "warning" "v3.5.5 - SPARK_HOME não definido"
+        check_status "Apache Spark" "warning" "v$SPARK_DIR_VERSION - SPARK_HOME não definido"
         echo -e "      └─ ${YELLOW}Execute: source ~/.bashrc${NC}"
     fi
 else
     check_status "Apache Spark" "fail" ""
 fi
 
-# Verificar PySpark (módulo Python)
-if [ -n "$PYTHONPATH" ] && [ -d "$HOME/apache/spark-3.5.5/python" ]; then
-    check_status "PySpark (PYTHONPATH)" "ok" "configurado"
-else
-    if [ -d "$HOME/apache/spark-3.5.5/python" ]; then
-        check_status "PySpark (PYTHONPATH)" "warning" "não configurado - execute source ~/.bashrc"
+# Verificar PySpark (módulo Python via PYTHONPATH)
+if [ -n "$SPARK_DIR" ] && [ -d "$SPARK_DIR/python" ]; then
+    if echo "${PYTHONPATH:-}" | grep -q "/python"; then
+        check_status "PySpark (PYTHONPATH)" "ok" "configurado"
     else
-        check_status "PySpark" "fail" ""
+        check_status "PySpark (PYTHONPATH)" "warning" "não configurado - execute source ~/.bashrc"
     fi
+else
+    check_status "PySpark" "fail" ""
 fi
 
 # ============================================================================
@@ -214,6 +213,16 @@ if grep -q "PYTHONPATH" ~/.bashrc 2>/dev/null; then
     check_status "PYTHONPATH (bashrc)" "ok" "configurado"
 else
     check_status "PYTHONPATH (bashrc)" "fail" ""
+fi
+
+# ============================================================================
+# VERIFICAÇÃO: Diretório de projetos
+# ============================================================================
+echo -e "\n${BLUE}📂 Verificando diretório de projetos...${NC}"
+if [ -d "$HOME/projects" ]; then
+    check_status "Diretório de projetos" "ok" "~/projects"
+else
+    check_status "Diretório de projetos" "warning" "~/projects não encontrado"
 fi
 
 # ============================================================================

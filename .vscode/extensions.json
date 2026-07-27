@@ -1,0 +1,29 @@
+{
+  // Extensões recomendadas para o ambiente de dados / IA no WSL.
+  // O VS Code sugere instalá-las automaticamente ao abrir este repositório.
+  "recommendations": [
+    // Python / Data Science
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-toolsai.jupyter",
+    "charliermarsh.ruff",
+    "ms-toolsai.datawrangler",
+
+    // Dados tabulares
+    "mechatroner.rainbow-csv",
+
+    // Containers
+    "ms-azuretools.vscode-docker",
+    "ms-azuretools.vscode-containers",
+
+    // WSL / Remote
+    "ms-vscode-remote.remote-wsl",
+
+    // IA
+    "openai.chatgpt",
+
+    // Aparência
+    "pkief.material-icon-theme",
+    "dracula-theme.theme-dracula"
+  ]
+}

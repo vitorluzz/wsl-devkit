@@ -1,6 +1,34 @@
-# ⚙️ wsl-for-data
+# 🧰 wsl-devkit
 
-Um script completo para configurar rapidamente um ambiente de desenvolvimento no **WSL 2 (Windows Subsystem for Linux)** com foco em **Data Engineering** e **Data Science**.
+Um kit de scripts para montar rapidamente um **ambiente de desenvolvimento completo no WSL 2 (Ubuntu)** — pensado para quem trabalha com **dados, IA/ML e desenvolvimento em geral**.
+
+Com um único comando (`./main.sh`) você instala e pré-configura **Git, Python, Java, Apache Spark (PySpark), Docker** e um **ambiente virtual Python**, tudo pronto para usar.
+
+---
+
+## ⚡ Início rápido
+
+> **Pré-requisito:** ter o **Docker Desktop** instalado no Windows com a integração WSL ativa (detalhes na seção **Pré-requisitos**, abaixo).
+
+```bash
+# 1. Instalar o WSL 2 + Ubuntu (PowerShell como Administrador — apenas na 1ª vez)
+wsl --install -d Ubuntu
+
+# 2. Já dentro do Ubuntu, instalar o git e clonar o projeto
+sudo apt update && sudo apt install -y git
+git clone https://github.com/vitorluzz/wsl-devkit.git
+cd wsl-devkit
+
+# 3. Rodar o instalador (abre um menu interativo)
+chmod +x main.sh
+./main.sh
+
+# 4. Recarregar o shell e ativar o ambiente virtual
+source ~/.bashrc
+activate
+```
+
+Prefere ir direto ao ponto? Use `./main.sh setup` para instalar sem menu e `./main.sh check` para verificar o ambiente.
 
 ---
 
@@ -10,10 +38,11 @@ Um script completo para configurar rapidamente um ambiente de desenvolvimento no
 |------------|-----------|
 | **Git** | Controle de versão com configuração de usuário |
 | **Python 3** | Linguagem de programação + pip + venv |
-| **Java JDK 21** | Runtime para Apache Spark |
-| **Apache Spark 3.5.5** | Framework de processamento distribuído (PySpark) |
-| **Docker** | Containerização (via Docker Desktop no Windows) |
+| **Java JDK 21 (Temurin LTS)** | Runtime para Apache Spark |
+| **Apache Spark 4.0.4** | Framework de processamento distribuído (PySpark) — versão configurável |
+| **Docker + Docker Compose** | Containerização (via Docker Desktop no Windows) |
 | **Virtual Environment** | Ambiente virtual Python global configurável |
+| **Diretório `~/projects`** | Pasta criada na home para organizar seus repositórios |
 
 ---
 
@@ -24,6 +53,8 @@ Antes de começar, certifique-se de ter:
 ### 1. Docker Desktop no Windows (OBRIGATÓRIO)
 
 > ⚠️ **IMPORTANTE**: O Docker Desktop deve estar instalado **ANTES** de executar o setup!
+
+O **Docker** e o **Docker Compose** dentro do WSL são fornecidos pela integração do Docker Desktop — não é preciso instalá-los manualmente no Ubuntu. Sem o Docker Desktop, o `docker` não funcionará no WSL. O `setup.sh` verifica isso e, se não encontrar, interrompe com instruções.
 
 1. Baixe e instale o [Docker Desktop](https://www.docker.com/products/docker-desktop)
 2. Abra o Docker Desktop
@@ -83,16 +114,16 @@ sudo apt update && sudo apt install -y git
 
 # Clonar o repositório no diretório home
 cd ~
-git clone https://github.com/vitorluzz/wsl-for-data.git
+git clone https://github.com/vitorluzz/wsl-devkit.git
 
 # Acessar a pasta do projeto
-cd wsl-for-data
+cd wsl-devkit
 
-# Dar permissão de execução
-chmod +x setup.sh check.sh
+# Dar permissão de execução ao script principal
+chmod +x main.sh
 
-# Executar o setup
-./setup.sh
+# Executar o setup (ou apenas './main.sh' para abrir o menu interativo)
+./main.sh setup
 ```
 
 ### Passo 4: Aplicar as Configurações
@@ -125,12 +156,42 @@ code .
 
 ---
 
+## 🚦 Como usar o `main.sh`
+
+O `main.sh`, na raiz do projeto, é o **ponto de entrada único**. Ele localiza e executa os scripts da pasta `scripts/` automaticamente (e já ajusta as permissões deles).
+
+| Comando | O que faz |
+|---------|-----------|
+| `./main.sh` | Abre o **menu interativo** (escolher entre instalar ou verificar) |
+| `./main.sh setup` | Instala e configura todo o ambiente |
+| `./main.sh check` | Verifica o que está instalado e aponta o que falta |
+| `./main.sh help` | Mostra a ajuda com os comandos disponíveis |
+
+> 💡 As variáveis de versão funcionam junto com o comando, ex.: `SPARK_VERSION=4.2.0 ./main.sh setup` (veja a seção **Configurando as versões**).
+
+### 👣 Primeiros passos depois do setup
+
+```bash
+# 1. Aplicar as variáveis de ambiente na sessão atual
+source ~/.bashrc
+
+# 2. Ativar o ambiente virtual Python
+activate
+
+# 3. (Opcional) Testar o PySpark rapidamente
+python -c "from pyspark.sql import SparkSession; spark = SparkSession.builder.master('local[*]').getOrCreate(); spark.range(5).show(); spark.stop()"
+```
+
+Se o último comando imprimir uma tabela de 0 a 4, seu Spark + PySpark estão funcionando. 🎉
+
+---
+
 ## 🔍 Verificando a Instalação
 
 Para verificar se tudo foi instalado corretamente, execute:
 
 ```bash
-./check.sh
+./main.sh check
 ```
 
 O script irá:
@@ -175,13 +236,16 @@ source ~/.venv/bin/activate
 ```
 ~/
 ├── java/
-│   └── jdk-21.0.2/          # Java JDK
+│   └── jdk-21/              # Java JDK (Temurin LTS)
 ├── apache/
-│   └── spark-3.5.5/         # Apache Spark
+│   └── spark-4.0.4/         # Apache Spark
 ├── .venv/                   # Ambiente virtual Python (ou nome personalizado)
-└── wsl-for-data/            # Este repositório
-    ├── setup.sh             # Script de instalação
-    ├── check.sh             # Script de verificação
+├── projects/                # Pasta para seus projetos/repositórios
+└── wsl-devkit/              # Este repositório
+    ├── main.sh              # Ponto de entrada (chama os scripts abaixo)
+    ├── scripts/             # Scripts de automação
+    │   ├── setup.sh         # Script de instalação
+    │   └── check.sh         # Script de verificação
     └── README.md            # Documentação
 ```
 
@@ -189,27 +253,47 @@ source ~/.venv/bin/activate
 
 ## 🔧 Variáveis de Ambiente Configuradas
 
-O setup adiciona automaticamente ao `~/.bashrc`:
+O setup adiciona automaticamente ao `~/.bashrc` (dentro de um bloco gerenciado, delimitado pelos marcadores `# >>> wsl-devkit >>>` … `# <<< wsl-devkit <<<`, reescrito a cada execução):
 
 ```bash
-# JAVA
-export JAVA_HOME=$HOME/java/jdk-21.0.2
-export PATH=$PATH:$JAVA_HOME/bin
+# JAVA (Temurin JDK 21)
+export JAVA_HOME="$HOME/java/jdk-21"
+export PATH="$JAVA_HOME/bin:$PATH"
 
-# SPARK
-export SPARK_HOME=$HOME/apache/spark-3.5.5
+# SPARK 4.0.4 (PySpark)
+export SPARK_HOME="$HOME/apache/spark-4.0.4"
 export SPARK_LOCAL_IP=127.0.0.1
-export HADOOP_HOME=$SPARK_HOME
-export PYTHONPATH=$SPARK_HOME/python
-export PATH=$PATH:$SPARK_HOME/bin
+export HADOOP_HOME="$SPARK_HOME"
+export PATH="$SPARK_HOME/bin:$PATH"
+export PYTHONPATH="$SPARK_HOME/python:$SPARK_HOME/python/lib/py4j-<versão>-src.zip:$PYTHONPATH"
+export PYSPARK_PYTHON=python3
 
 # Alias para ativar venv
 alias activate="source ~/.venv/bin/activate"
 ```
 
+> 💡 O `PYTHONPATH` inclui o `py4j` que acompanha o Spark, garantindo que `import pyspark` funcione dentro do ambiente virtual.
+
 ---
 
-## 💡 Comandos Úteis
+## 🎛️ Configurando as versões
+
+As versões do **Spark** e do **JDK** ficam em variáveis no topo do `setup.sh` e podem ser sobrescritas na hora de executar, sem editar o script:
+
+```bash
+# Instala a última versão do Spark 4.x
+SPARK_VERSION=4.2.0 ./main.sh setup
+
+# Ou mantém a linha LTS 3.5 (máxima compatibilidade com o ecossistema)
+SPARK_VERSION=3.5.9 ./main.sh setup
+
+# Também é possível trocar a versão (feature) do JDK
+JDK_FEATURE=21 SPARK_VERSION=4.0.4 ./main.sh setup
+```
+
+> ℹ️ O download do Spark tenta primeiro o mirror oficial (`dlcdn.apache.org`) e, se a versão já tiver sido arquivada, cai automaticamente para o `archive.apache.org`. O JDK é sempre a última atualização **GA** do Temurin para a versão escolhida (via API do Adoptium), evitando URLs fixas e desatualizadas.
+>
+> ⚠️ O Spark 4.x roda em **Java 17 ou 21** — mantenha `JDK_FEATURE=21` (LTS) ao usar o Spark 4.
 
 | Comando | Descrição |
 |---------|-----------|
@@ -217,8 +301,9 @@ alias activate="source ~/.venv/bin/activate"
 | `java -version` | Verifica versão do Java |
 | `spark-submit --version` | Verifica versão do Spark |
 | `docker --version` | Verifica versão do Docker |
+| `docker compose version` | Verifica versão do Docker Compose |
 | `python --version` | Verifica versão do Python |
-| `./check.sh` | Verifica todo o ambiente |
+| `./main.sh check` | Verifica todo o ambiente |
 
 ---
 
@@ -240,8 +325,19 @@ alias activate="source ~/.venv/bin/activate"
 
 **Solução**: 
 ```bash
-chmod +x setup.sh check.sh
+chmod +x main.sh
 ```
+
+### DNS / rede não funciona após o setup
+
+A fixação de DNS (`8.8.8.8` + `chattr +i`) agora é **opcional** e desativada por padrão, pois pode quebrar a conexão em redes com VPN ou proxy corporativo. Se você a ativou e passou a ter problemas de rede, reverta com:
+
+```bash
+sudo chattr -i /etc/resolv.conf
+sudo rm -f /etc/resolv.conf
+```
+
+Depois reinicie o WSL no PowerShell: `wsl --shutdown`.
 
 ---
 
